@@ -1,0 +1,9 @@
+# Parokia — Livrables
+
+- **Interface éditoriale paroissiale responsive** — La page d’accueil présente une barre de navigation intégrant les 8 chapelles TUNGANE, USHINDI, AMANI, MAPENDO, AMKENI, UMOJA, TUNDA et MWANGAZA, une actualité mise en avant, un fil de nouvelles, un agenda des messes et des cartes de services dans une hiérarchie inspirée de RFI.
+- **Thème liturgique administrable** — L’interface permet de choisir Bleu ciel, Vert, Violet, Rouge ou Jaune doré/Blanc; le changement applique les variables CSS `--accent-color` et `--accent-hover` uniquement aux accents.
+- **Composant DynamicIconOrImage** — Le composant React reçoit `icon`, `imageUrl`, `alt` et `className`, affiche une image avec chargement, puis revient sur l’icône SVG en cas d’erreur ou d’absence d’image.
+- **Module d’adhésion des chorales** — Le formulaire réservé aux responsables recueille le nom complet, le nom de la chorale et une chapelle parmi les huit; une soumission valide produit un état PENDING explicite.
+- **Architecture PostgreSQL et FastMCP** — Le dépôt comprend le DDL complet pour `chapels`, `choirs`, `users`, `mass_schedules`, `membership_requests` et `liturgical_settings`, les index demandés, ainsi que `backend/server.py` avec ressources, outils et prompt FastMCP.
+- **Base FastAPI sécurisable** — Le serveur Python expose les modèles Pydantic, des routes de santé, d’authentification et de demandes d’adhésion, avec JWT, Bcrypt et RBAC documentés en anglais dans le code technique.
+- **Manifeste et configuration front** — Le projet contient `public/manus-routes.json`, `tailwind.config.js`, les variables CSS natives et la configuration de logo du projet.

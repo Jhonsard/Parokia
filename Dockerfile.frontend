@@ -1,0 +1,16 @@
+# Frontend multi-stage Dockerfile
+# Build:  docker build -f Dockerfile.frontend -t parokia-frontend .
+# Run:    docker run -p 3000:3000 parokia-frontend
+
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package.json vite.config.js tailwind.config.js postcss.config.js index.html ./
+COPY src ./src
+COPY public ./public
+RUN npm ci --prefer-offline && npm run build
+
+FROM nginx:1.27-alpine AS runtime
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

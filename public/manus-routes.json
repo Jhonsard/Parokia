@@ -1,0 +1,6 @@
+{"routes":[
+  {"path":"/","title":"Parokia — Accueil"},
+  {"path":"/#actualites","title":"Fil de la paroisse"},
+  {"path":"/#agenda","title":"Agenda des messes"},
+  {"path":"/#adhesion","title":"Adhésion chorale"}
+]}

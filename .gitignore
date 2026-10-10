@@ -1,0 +1,30 @@
+# Build artefacts
+backend/parokia.db
+backend/*.db
+backend/*.sqlite
+backend/*.sqlite3
+backend/.env
+backend/__pycache__/
+backend/htmlcov/
+backend/.pytest_cache/
+backend/.coverage
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+*.manifest
+*.spec
+
+# Frontend
+node_modules/
+dist/
+.vite/
+
+# Misc
+.DS_Store
+.idea/
+.vscode/

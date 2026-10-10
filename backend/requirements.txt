@@ -1,0 +1,34 @@
+# Parokia Backend — Python dependencies
+# Python >= 3.11 (developed on 3.13)
+# Install: pip install -r backend/requirements.txt
+#
+# Pin to a tested compatible set; use `pip install -r backend/requirements.txt`.
+# The FastAPI/Pydantic/SQLAlchemy set is kept mutually version-aligned.
+
+# --- Web framework ---
+fastapi==0.142.2
+uvicorn[standard]==0.34.1
+python-multipart==0.0.20
+
+# --- Data validation ---
+pydantic==2.13.5
+pydantic[email]==2.13.5
+
+# --- ORM & databases ---
+SQLAlchemy==2.0.36
+psycopg[binary]==3.2.3     # PostgreSQL driver (production)
+pymysql==1.1.1             # MySQL driver (optional fallback)
+
+# --- Auth ---
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.2.1             # 4.2.x is compatible with passlib 1.7.4 + Python 3.13
+
+# --- MCP ---
+mcp==1.2.0
+
+# --- Testing (dev only) ---
+pytest==8.4.6
+pytest-asyncio==0.25.2
+httpx==0.28.1
+alembic==1.13.3
