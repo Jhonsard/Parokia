@@ -8,9 +8,13 @@ backend/__pycache__/
 backend/htmlcov/
 backend/.pytest_cache/
 backend/.coverage
+backend/*.db-shm
+backend/*.db-wal
 
 # Python
 __pycache__/
+.venv/
+venv/
 *.py[cod]
 *.pyo
 *.pyd

@@ -33,18 +33,52 @@ function useLiturgicalTheme(localTheme) {
 }
 
 // ---------------------------------------------------------------------------
+// Custom hook — chapel directory (POST /api/membership-requests needs numeric IDs)
+// ---------------------------------------------------------------------------
+
+/**
+ * Load the chapel directory once.
+ *
+ * The public form selects a chapel by name, while the API validates
+ * `chapel_id: int` (`gt=0`), so the numeric identifier must come from
+ * `GET /api/chapels` instead of the local mnemonic codes.
+ */
+function useChapelDirectory() {
+  const [directory, setDirectory] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch(`${API_BASE}/api/chapels`)
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`Erreur ${res.status}`))))
+      .then((records) => {
+        if (cancelled || !Array.isArray(records) || records.length === 0) return;
+        setDirectory(records);
+      })
+      .catch((err) => {
+        console.warn('Chapel directory unavailable, keeping the local fallback:', err.message);
+      });
+
+    return () => { cancelled = true; };
+  }, []);
+
+  return directory;
+}
+
+// ---------------------------------------------------------------------------
 // Membership form hook
 // ---------------------------------------------------------------------------
 
-function useMembershipForm() {
+function useMembershipForm(chapelDirectory) {
   const [formState, setFormState] = useState({
     fullName:  '',
     choirName: '',
     chapel:    'TUNGANE',
   });
-  const [submitting, setSubmitting]   = useState(false);
-  const [submitted,  setSubmitted]    = useState(false);
-  const [apiError,   setApiError]     = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted,  setSubmitted]  = useState(false);
+  const [degraded,   setDegraded]   = useState(false);
+  const [apiError,   setApiError]   = useState(null);
 
   const handleChange = useCallback((field) => (e) => {
     setFormState((prev) => ({ ...prev, [field]: e.target.value }));
@@ -54,8 +88,18 @@ function useMembershipForm() {
     e.preventDefault();
     if (!formState.fullName.trim() || !formState.choirName.trim()) return;
 
-    const chapelObj = chapels.find((c) => c.name === formState.chapel);
+    const chapelRecord = chapelDirectory.find((c) => c.name === formState.chapel);
+    const chapelObj    = chapels.find((c) => c.name === formState.chapel);
     if (!chapelObj) return;
+
+    // The directory and the submission share the same API: when the directory
+    // could not be read, the request cannot be validated either and the form
+    // degrades to a local confirmation (see docs/DECISIONS.md).
+    if (!chapelRecord) {
+      setDegraded(true);
+      setSubmitted(true);
+      return;
+    }
 
     setSubmitting(true);
     setApiError(null);
@@ -67,24 +111,40 @@ function useMembershipForm() {
         body:    JSON.stringify({
           full_name:  formState.fullName.trim(),
           choir_name: formState.choirName.trim(),
-          chapel_id:  chapelObj.code,   // backend resolves by ID in production
+          chapel_id:  chapelRecord.id,
         }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail ?? `Erreur ${res.status}`);
+        // The API answers with { error: { message, details } }; FastAPI's own
+        // validation still uses { detail }.
+        const details = err.error?.details;
+        const detail = Array.isArray(details)
+          ? details
+              .map((entry) => [entry.field, entry.message].filter(Boolean).join(' : '))
+              .join(' · ')
+          : err.error?.message
+            ?? (Array.isArray(err.detail)
+              ? err.detail.map((entry) => entry.msg ?? 'champ invalide').join(' · ')
+              : err.detail);
+        throw new Error(detail ?? `Erreur ${res.status}`);
       }
       setSubmitted(true);
     } catch (err) {
-      // Graceful degradation: mark as submitted locally even if API is down
-      console.warn('API not reachable, falling back to local state:', err.message);
-      setSubmitted(true);
+      if (err instanceof TypeError) {
+        // Graceful degradation: the API is unreachable, keep a local confirmation.
+        console.warn('API not reachable, falling back to local state:', err.message);
+        setDegraded(true);
+        setSubmitted(true);
+      } else {
+        setApiError(err.message);
+      }
     } finally {
       setSubmitting(false);
     }
-  }, [formState]);
+  }, [formState, chapelDirectory]);
 
-  return { formState, handleChange, handleSubmit, submitting, submitted, apiError };
+  return { formState, handleChange, handleSubmit, submitting, submitted, degraded, apiError };
 }
 
 // ---------------------------------------------------------------------------
@@ -115,7 +175,9 @@ function App() {
     }
   }, []);
 
-  const { formState, handleChange, handleSubmit, submitting, submitted } = useMembershipForm();
+  const chapelDirectory = useChapelDirectory();
+  const { formState, handleChange, handleSubmit, submitting, submitted, degraded, apiError } =
+    useMembershipForm(chapelDirectory);
 
   // Close search drawer on Escape
   useEffect(() => {
@@ -322,6 +384,15 @@ function App() {
                 <Check size={16} style={{ verticalAlign: 'middle', marginRight: 7 }} />
                 <strong>Demande transmise en attente de validation.</strong>
                 <br />L'équipe paroissiale reviendra vers vous pour confirmer l'intégration de votre chorale.
+                {degraded && (
+                  <>
+                    <br />
+                    <small>
+                      Mode local : l'API paroissiale est momentanément injoignable ; la demande
+                      sera à renvoyer une fois la connexion rétablie.
+                    </small>
+                  </>
+                )}
               </div>
             ) : (
               <>
@@ -359,6 +430,11 @@ function App() {
                     ))}
                   </select>
                 </div>
+                {apiError && (
+                  <p className="form-error" role="alert">
+                    Demande refusée : {apiError}
+                  </p>
+                )}
                 <div className="form-submit">
                   <span className="pending-note">
                     <span className="pending-dot" />
