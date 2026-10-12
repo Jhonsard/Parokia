@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "Parokia",
+    "slug": "parokia-mobile",
+    "version": "1.0.0",
+    "scheme": "parokia",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F8FAFC",
+    "primaryColor": "#0284C7",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "org.parokia.mobile"
+    },
+    "android": {
+      "package": "org.parokia.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
