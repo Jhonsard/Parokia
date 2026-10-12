@@ -27,7 +27,7 @@ services:
   backend:
     build:
       context: .
-      file: backend/Dockerfile
+      dockerfile: backend/Dockerfile
     restart: unless-stopped
     depends_on:
       postgres:
@@ -46,7 +46,7 @@ services:
   mcp:
     build:
       context: .
-      file: backend/Dockerfile
+      dockerfile: backend/Dockerfile
     depends_on:
       - postgres
     env_file:

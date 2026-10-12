@@ -33,9 +33,16 @@ from parokia.config import settings
 from parokia.main import app
 from parokia.version import __version__
 
+# The FastMCP instance is exposed at module level so the standard inspector entry
+# point works: ``mcp dev backend/server.py`` discovers ``mcp``, ``server`` or
+# ``app`` in that order and would otherwise fall back to the FastAPI ``app``.
+# Importing the module has no side effect: the MCP server only touches the
+# database when a resource, tool or prompt is actually invoked.
+from parokia.mcp_server import mcp  # noqa: F401  (re-exported for `mcp dev`)
+
 log = logging.getLogger("parokia.server")
 
-__all__ = ["app", "__version__"]
+__all__ = ["app", "mcp", "__version__"]
 
 
 def main() -> None:

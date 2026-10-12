@@ -17,6 +17,9 @@ dev = [
     "pytest-asyncio>=0.21",
     "httpx>=0.27",
     "pytest-cov>=4.0",
+    # MCP Inspector CLI (`mcp dev backend/server.py`); typer/rich are not needed
+    # by the production image, which installs backend/requirements.txt only.
+    "mcp[cli]==1.2.0",
 ]
 
 [tool.setuptools]

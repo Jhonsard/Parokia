@@ -40,12 +40,21 @@ Parokia/
 │   ├── data.js                ← données éditoriales locales (démo)
 │   └── styles.css             ← variables CSS liturgiques + layout complet
 │
+├── mobile/                    ← Application React Native (Expo)
+│   ├── App.tsx                ← providers : polices, thème liturgique, session
+│   ├── src/api/               ← client fetch typé, endpoints, types Pydantic mirroir
+│   ├── src/auth/              ← JWT (SecureStore), contexte de session
+│   ├── src/components/        ← AppText, Card, Chip, DynamicIconOrImage, StateView…
+│   ├── src/screens/           ← connexion, accueil, messes, chorales, demandes, thème
+│   └── src/theme/             ← jetons de design, thème liturgique, polices
+│
 ├── public/
 │   └── manus-routes.json      ← manifeste des routes SPA
 │
 ├── docs/                      ← documentation projet
 │   ├── TODO.md                ← livrables
 │   ├── DECISIONS.md           ← journal des décisions techniques
+│   ├── DEPLOYMENT.md          ← runbook de mise en service (Phase 5)
 │   └── AGENTS.md              ← spécifications & contraintes complètes
 │
 ├── index.html                 ← point d'entrée HTML (src/main.jsx)
@@ -72,6 +81,9 @@ Parokia/
 | RBAC (ADMIN, CHOIR_LEADER, PUBLIC) | Minimum viable ; extensible vers des permissions granulaires |
 | Vite proxy `/api` | Évite les problèmes CORS en développement |
 | CSS variables `--accent-color` | Changement de thème liturgique sans recolorer toute la feuille |
+| Expo SDK 57 + React Navigation (bottom tabs) | React Native nu / expo-router | Une seule base iOS + Android, démarrage immédiat via Expo Go, quatre onglets et un thème cohérents avec le web |
+| URL d'API résolue dynamiquement (`EXPO_PUBLIC_API_URL`, sinon l'hôte du bundler) | URL codée en dur | Un téléphone sur le Wi-Fi paroissial atteint l'API de développement; variable obligatoire en production |
+| JWT mobile dans SecureStore | AsyncStorage | Le jeton reste dans le trousseau de l'appareil (localStorage uniquement pour l'aperçu web) |
 
 ---
 
@@ -93,8 +105,26 @@ Parokia/
 - Formulaire d'adhésion avec tentative d'appel API (graceful degradation)
 - Thème liturgique via variables CSS
 
-### Phase 4 — Mobile App React Native
-> À venir — interface de consultation pour responsables de chorales.
+### Phase 4 ✅ — Mobile App React Native
+- `mobile/` : application Expo (SDK 57, TypeScript strict) pour les responsables de chorales
+- Connexion JWT (`POST /api/auth/login`), session restaurée depuis le trousseau de l'appareil
+- Cinq onglets : Accueil (profil + chorale + prochaines messes), Messes (filtres chapelle/période,
+  programmation d'une célébration), Chorales (répertoire des huit chapelles), Demandes
+  (lecture pour `CHOIR_LEADER`, approbation/rejet avec motif pour `ADMIN`), Thème (temps liturgique
+  en vigueur + nuancier avec aperçu local)
+- `DynamicIconOrImage` porté en React Native (photo, chargement, repli sur icône)
+- Thème liturgique et typographie repris du web (Manrope + Fraunces, repli système si les
+  polices ne se chargent pas)
+- Vérifications : `npm run typecheck`, `npx expo export --platform android` (bundle Hermes),
+  `npx expo-doctor` (21/21)
 
 ### Phase 5 — Intégration & Déploiement
-> PostgreSQL, Docker Compose, nginx, SSL, MCP via `mcp dev backend/server.py`.
+- `docker-compose.yml` validé (`docker compose config -q`) après correction de `build.file` →
+  `build.dockerfile`, qui empêchait tout démarrage de la pile
+- Serveur MCP vérifié de bout en bout en stdio : 5 resources, 6 tools, 2 prompts
+  (`mcp dev backend/server.py` opérationnel une fois `mcp[cli]` installé, instance `mcp` exposée
+  par `server.py`)
+- Runbook complet (variables, TLS, sauvegardes, inspecteur MCP, build EAS de l'app mobile) :
+  `docs/DEPLOYMENT.md`
+> Reste à faire sur une machine avec un démon Docker : `docker compose up --build` puis
+> vérification PostgreSQL, et `eas build` pour publier l'app mobile.

@@ -24,7 +24,10 @@ from .schemas import RequestStatus
 from .seed import run_seed
 from .services import (
     ServiceError,
-    auto_assign_choirs,
+    # Aliased: the MCP tool below is also called ``auto_assign_choirs`` and would
+    # otherwise shadow the service function, turning the call into endless
+    # recursion into the tool itself.
+    auto_assign_choirs as build_choir_rotation,
     list_chapels,
     list_masses,
     list_membership_requests,
@@ -34,6 +37,13 @@ from .services import (
 )
 
 log = logging.getLogger("parokia.mcp")
+
+# FastMCP 1.2.0 logs resource registration with ``extra={"name": ...}``, which
+# collides with the reserved ``name`` attribute of ``logging.LogRecord`` and
+# raises ``KeyError`` as soon as that logger is enabled for DEBUG — the default
+# when ``PAROKIA_DEBUG`` is on during development. The library logger therefore
+# stays at INFO; the parish logger below keeps the configured verbosity.
+logging.getLogger("mcp.server.fastmcp").setLevel(logging.INFO)
 
 mcp = FastMCP("parokia-automation")
 
@@ -263,7 +273,7 @@ def auto_assign_choirs(chapel_id: int, month: int, year: int) -> str:
     _ensure_schema()
     try:
         with _session() as db:
-            assignments = auto_assign_choirs(db, chapel_id, month, year)
+            assignments = build_choir_rotation(db, chapel_id, month, year)
     except ServiceError as exc:
         return _fail(exc.message, chapel_id=chapel_id, month=month, year=year)
     return _ok(assignments=assignments)
